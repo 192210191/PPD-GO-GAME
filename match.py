@@ -2,6 +2,7 @@
 from game.go import Board, opponent_color
 from game.ui import UI
 import pygame
+import sys
 import time
 from os.path import join
 
