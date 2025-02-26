@@ -1,0 +1,395 @@
+import pygame
+import os
+import sys
+
+"""
+This file is the GUI on top of the game backend.
+"""
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+BACKGROUND = resource_path('game/images/ramin.jpg')
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BACKGROUND_COLOR = (219, 186, 130)
+
+
+def get_rbg(color):
+    if color == 'WHITE':
+        return 255, 255, 255
+    elif color == 'BLACK':
+        return 0, 0, 0
+    else:
+        return 0, 133, 211
+
+
+class UI:
+    def __init__(self, board_size=19):
+        """Create, initialize and draw an empty board."""
+        self.board_size = board_size
+        # Adjust cell size only for 19x19 to fit screen
+        self.cell_size = 30 if board_size == 19 else 40
+        self.margin = 45  # margin from edge
+        
+        # Calculate board dimensions
+        self.board_pixels = (self.board_size - 1) * self.cell_size
+        self.outline = pygame.Rect(self.margin, self.margin, self.board_pixels, self.board_pixels)
+        self.screen = None
+        self.background = None
+        self.font = None
+        # Keep original score rect but adjust width for 19x19
+        self.score_rect = pygame.Rect(45, self.margin + self.board_pixels + 15, 
+                                    self.board_pixels + 100, 35)
+        
+        # Pass button
+        self.pass_button = None
+        self.pass_text = None
+        
+        # Restart button
+        self.restart_button = None
+        self.restart_text = None
+
+    def initialize(self):
+        """Initialize the game board."""
+        pygame.init()
+        pygame.display.set_caption('Go Game')
+        
+        # Set window size based on board size with minimum width
+        window_width = max(820, self.margin * 2 + self.board_pixels + 200)
+        window_height = self.margin * 2 + self.board_pixels + 100
+        self.screen = pygame.display.set_mode((window_width, window_height), 0, 32)
+        self.background = pygame.image.load(BACKGROUND).convert()
+        self.font = pygame.font.SysFont('Arial', 20)
+        
+        # Initialize pass button - position relative to board
+        button_y = self.margin + self.board_pixels + 15
+        self.pass_button = pygame.Rect(self.margin + self.board_pixels - 100, button_y, 100, 30)
+        self.pass_text = self.font.render('Pass Turn', True, (0, 0, 0))
+
+        # Initialize restart button - position below pass button
+        restart_y = button_y + 40
+        self.restart_button = pygame.Rect(self.margin + self.board_pixels - 100, restart_y, 100, 30)
+        self.restart_text = self.font.render('Restart', True, (0, 0, 0))
+        
+        # Draw the board outline
+        pygame.draw.rect(self.background, BLACK, self.outline, 3)
+        
+        # Draw the grid lines
+        for i in range(self.board_size):
+            # Vertical lines
+            start_pos = (self.margin + (self.cell_size * i), self.margin)
+            end_pos = (self.margin + (self.cell_size * i), self.margin + self.board_pixels)
+            pygame.draw.line(self.background, BLACK, start_pos, end_pos, 1)
+            
+            # Horizontal lines
+            start_pos = (self.margin, self.margin + (self.cell_size * i))
+            end_pos = (self.margin + self.board_pixels, self.margin + (self.cell_size * i))
+            pygame.draw.line(self.background, BLACK, start_pos, end_pos, 1)
+
+        # Draw star points (hoshi)
+        if self.board_size == 19:
+            star_points = [(3, 3), (3, 9), (3, 15),
+                          (9, 3), (9, 9), (9, 15),
+                          (15, 3), (15, 9), (15, 15)]
+        elif self.board_size == 13:
+            star_points = [(3, 3), (3, 9),
+                          (6, 6),
+                          (9, 3), (9, 9)]
+        else:  # 9x9
+            star_points = [(2, 2), (2, 6),
+                          (4, 4),
+                          (6, 2), (6, 6)]
+
+        for x, y in star_points:
+            pos = (self.margin + x * self.cell_size, self.margin + y * self.cell_size)
+            pygame.draw.circle(self.background, BLACK, pos, 5, 0)
+
+        self.screen.blit(self.background, (0, 0))
+        pygame.display.update()
+
+    def coords(self, point):
+        """Return the coordinate of a stone drawn on board"""
+        return (self.margin + point[0] * self.cell_size, 
+                self.margin + point[1] * self.cell_size)
+
+    def leftup_corner(self, point):
+        """Return the top-left corner for the area to clear when removing a stone"""
+        return (self.margin - 20 + point[0] * self.cell_size, 
+                self.margin - 20 + point[1] * self.cell_size)
+
+    def draw(self, point, color, size=15):
+        """Draw a stone at the specified intersection with a growing animation effect."""
+        rgb_color = get_rbg(color)
+        position = self.coords(point)
+        
+        # Animate stone placement with growing effect
+        for r in range(5, size + 1, 2):
+            pygame.draw.circle(self.screen, rgb_color, position, r, 0)
+            pygame.display.update()
+            pygame.time.wait(10)  # Short delay for smooth animation
+            
+            # If not at final size, clear the previous circle
+            if r < size:
+                # Draw a slightly larger circle in background color to clean up
+                pygame.draw.circle(self.screen, BACKGROUND_COLOR, position, r + 1, 0)
+                
+                # Redraw the grid lines that might have been covered
+                # Get the grid area around the stone
+                area_rect = pygame.Rect(position[0] - r - 1, position[1] - r - 1, 
+                                      (r + 1) * 2, (r + 1) * 2)
+                stone_area = self.background.subsurface(area_rect).copy()
+                self.screen.blit(stone_area, area_rect)
+        
+        # Draw final stone
+        pygame.draw.circle(self.screen, rgb_color, position, size, 0)
+        pygame.display.update()
+
+    def remove(self, point):
+        """Remove a stone from the board at the given point."""
+        x, y = point
+        screen_x = self.margin + (x * self.cell_size)
+        screen_y = self.margin + (y * self.cell_size)
+        
+        # Get the corresponding area from the background (which has only the grid)
+        area_rect = pygame.Rect(screen_x - 20, screen_y - 20, self.cell_size, self.cell_size)
+        stone_area = self.background.subsurface(area_rect).copy()
+        
+        # Blit the clean background area (with only grid lines) onto the screen
+        self.screen.blit(stone_area, area_rect)
+        pygame.display.update()
+
+    def save_image(self, path_to_save):
+        pygame.image.save(self.screen, path_to_save)
+
+    def pixel_to_board_coords(self, x, y):
+        """Convert pixel coordinates to board coordinates.
+        Returns None if click is outside the valid board area."""
+        if self.outline.collidepoint(x, y):
+            board_x = int(round(((x - self.margin) / self.cell_size), 0))
+            board_y = int(round(((y - self.margin) / self.cell_size), 0))
+            # Ensure coordinates are within valid board range (1-19)
+            if 1 <= board_x <= self.board_size and 1 <= board_y <= self.board_size:
+                return (board_x, board_y)
+        return None
+
+    def update_score_display(self, black_score, white_score, game_over=False):
+        """Update the score display at the bottom of the board."""
+        # Clear the score area
+        pygame.draw.rect(self.screen, (255, 255, 255), self.score_rect)
+        
+        # Create score text
+        black_text = f"Black: {black_score:.1f}"
+        white_text = f"White: {white_score:.1f}"
+        
+        # Render score text
+        black_surface = self.font.render(black_text, True, (0, 0, 0))
+        white_surface = self.font.render(white_text, True, (0, 0, 0))
+        
+        # Position and display scores - adjust spacing for 19x19
+        spacing = 200 if self.board_size == 19 else 250
+        self.screen.blit(black_surface, (50, self.margin + self.board_pixels + 20))
+        self.screen.blit(white_surface, (50 + spacing, self.margin + self.board_pixels + 20))
+        
+        # If game is over, display winner
+        if game_over:
+            winner = "Black" if black_score > white_score else "White"
+            winner_text = f"Winner: {winner}!"
+            winner_surface = self.font.render(winner_text, True, (0, 100, 0))
+            self.screen.blit(winner_surface, (50 + spacing * 2, self.margin + self.board_pixels + 20))
+        
+        pygame.display.update()
+
+    def draw_game_state(self, current_player, board):
+        """Draw game state information including current player, scores, and pass button"""
+        # Clear the info area
+        info_rect = pygame.Rect(self.margin + self.board_pixels + 20, self.margin + 20, 180, 200)
+        pygame.draw.rect(self.screen, (255, 255, 255), info_rect)
+        
+        # Get current scores
+        scores = board.get_score()
+        
+        # Draw current player indicator
+        player_text = self.font.render(f"Current: {current_player}", True, (0, 0, 0))
+        self.screen.blit(player_text, (self.margin + self.board_pixels + 30, self.margin + 30))
+        
+        # Draw scores
+        black_text = self.font.render(f"Black score: {scores['BLACK']:.1f}", True, (0, 0, 0))
+        white_text = self.font.render(f"White score: {scores['WHITE']:.1f}", True, (0, 0, 0))
+        self.screen.blit(black_text, (self.margin + self.board_pixels + 30, self.margin + 60))
+        self.screen.blit(white_text, (self.margin + self.board_pixels + 30, self.margin + 90))
+        
+        # Draw buttons with enhanced styling
+        # Pass button
+        pygame.draw.rect(self.screen, (220, 220, 220), self.pass_button)
+        pygame.draw.rect(self.screen, (100, 100, 100), self.pass_button, 2)
+        pass_text_rect = self.pass_text.get_rect(center=self.pass_button.center)
+        self.screen.blit(self.pass_text, pass_text_rect)
+        
+        # Restart button
+        pygame.draw.rect(self.screen, (220, 220, 220), self.restart_button)
+        pygame.draw.rect(self.screen, (100, 100, 100), self.restart_button, 2)
+        restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
+        self.screen.blit(self.restart_text, restart_text_rect)
+        
+        # Show pass count if any
+        if board.passes > 0:
+            pass_rect = pygame.Rect(self.margin + self.board_pixels + 30, self.margin + 130, 100, 30)
+            pygame.draw.rect(self.screen, (255, 220, 220), pass_rect)
+            pygame.draw.rect(self.screen, (200, 0, 0), pass_rect, 2)
+            pass_count = self.font.render(f"Passes: {board.passes}", True, (200, 0, 0))
+            text_rect = pass_count.get_rect(center=pass_rect.center)
+            self.screen.blit(pass_count, text_rect)
+        
+        pygame.display.update()
+
+    def draw_buttons(self, board):
+        """Draw the pass and restart buttons."""
+        # Draw pass button
+        pygame.draw.rect(self.screen, (200, 200, 200), self.pass_button)
+        pass_text_rect = self.pass_text.get_rect(center=self.pass_button.center)
+        self.screen.blit(self.pass_text, pass_text_rect)
+        
+        # Draw restart button
+        pygame.draw.rect(self.screen, (200, 200, 200), self.restart_button)
+        restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
+        self.screen.blit(self.restart_text, restart_text_rect)
+
+    def show_game_over(self, black_score, white_score, board):
+        """Display game over screen with final scores and details"""
+        # Create a new blank screen
+        self.screen.fill((240, 240, 240))  # Light gray background
+        
+        # Create semi-transparent overlay for better text visibility
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+        overlay.fill((255, 255, 255))
+        overlay.set_alpha(128)
+        self.screen.blit(overlay, (0, 0))
+        
+        # Create game over text with slightly larger fonts
+        game_over_font = pygame.font.SysFont('Arial', 42)
+        score_font = pygame.font.SysFont('Arial', 28)
+        detail_font = pygame.font.SysFont('Arial', 22)
+        
+        # Create text surfaces
+        game_over_text = game_over_font.render("Game Over!", True, (0, 0, 0))
+        
+        # Black score details
+        black_captures = board.captured_stones['BLACK']
+        black_score_text = score_font.render(f"Black Total: {black_score:.1f}", True, (0, 0, 0))
+        black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, (100, 100, 100))
+        
+        # White score details (including komi)
+        white_captures = board.captured_stones['WHITE']
+        white_score_text = score_font.render(f"White Total: {white_score:.1f}", True, (0, 0, 0))
+        white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, (100, 100, 100))
+        
+        winner = "Black" if black_score > white_score else "White"
+        margin = abs(black_score - white_score)
+        winner_text = score_font.render(f"Winner: {winner} by {margin:.1f} points!", True, (0, 100, 0))
+        
+        # Position text in center of screen
+        center_x = self.screen.get_width() // 2
+        center_y = self.screen.get_height() // 2
+        
+        # Draw all text elements with improved spacing
+        self.screen.blit(game_over_text, 
+                        game_over_text.get_rect(centerx=center_x, centery=center_y - 100))
+        
+        # Black score
+        self.screen.blit(black_score_text, 
+                        black_score_text.get_rect(centerx=center_x, centery=center_y - 40))
+        self.screen.blit(black_detail, 
+                        black_detail.get_rect(centerx=center_x, centery=center_y - 10))
+        
+        # White score
+        self.screen.blit(white_score_text, 
+                        white_score_text.get_rect(centerx=center_x, centery=center_y + 40))
+        self.screen.blit(white_detail, 
+                        white_detail.get_rect(centerx=center_x, centery=center_y + 70))
+        
+        # Winner
+        self.screen.blit(winner_text, 
+                        winner_text.get_rect(centerx=center_x, centery=center_y + 120))
+        
+        # Add exit instruction
+        exit_text = detail_font.render("Click anywhere to exit", True, (100, 100, 100))
+        self.screen.blit(exit_text, 
+                        exit_text.get_rect(centerx=center_x, bottom=self.screen.get_height() - 30))
+        
+        pygame.display.update()
+        
+        # Wait for click to exit
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    waiting = False
+                    pygame.quit()
+                    return
+
+    def draw_board(self):
+        """Draw the empty board."""
+        # Draw the background
+        self.screen.blit(self.background, (0, 0))
+        
+        # Draw the board outline
+        pygame.draw.rect(self.screen, BLACK, self.outline, 2)
+        
+        # Draw the grid lines
+        for i in range(self.board_size):
+            # Vertical lines
+            start_pos = (self.margin + (self.cell_size * i), self.margin)
+            end_pos = (self.margin + (self.cell_size * i), self.margin + self.board_pixels)
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+            
+            # Horizontal lines
+            start_pos = (self.margin, self.margin + (self.cell_size * i))
+            end_pos = (self.margin + self.board_pixels, self.margin + (self.cell_size * i))
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+        
+        # Draw star points (for 19x19 board)
+        if self.board_size == 19:
+            star_points = [(3, 3), (9, 3), (15, 3),
+                         (3, 9), (9, 9), (15, 9),
+                         (3, 15), (9, 15), (15, 15)]
+            for point in star_points:
+                x = self.margin + point[0] * self.cell_size
+                y = self.margin + point[1] * self.cell_size
+                pygame.draw.circle(self.screen, BLACK, (x, y), 3)
+        
+        pygame.display.update()
+
+    def clear_board(self):
+        """Clear the board for restart."""
+        self.draw_board()
+        pygame.display.flip()
+
+    def _draw_grid_lines(self):
+        """Draw the grid lines on the board."""
+        for i in range(self.board_size):
+            # Vertical lines
+            start_pos = (self.margin + (self.cell_size * i), self.margin)
+            end_pos = (self.margin + (self.cell_size * i), self.margin + self.board_pixels)
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+            
+            # Horizontal lines
+            start_pos = (self.margin, self.margin + (self.cell_size * i))
+            end_pos = (self.margin + self.board_pixels, self.margin + (self.cell_size * i))
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+            end_pos = (self.margin + (self.cell_size * i), self.margin + self.board_pixels)
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+            
+            # Horizontal lines
+            start_pos = (self.margin, self.margin + (self.cell_size * i))
+            end_pos = (self.margin + self.board_pixels, self.margin + (self.cell_size * i))
+            pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)

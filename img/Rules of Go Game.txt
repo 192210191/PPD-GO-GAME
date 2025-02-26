@@ -1,0 +1,39 @@
+                                    Rules of Go Game
+1.Board & Stones
+
+Go is played on a 19x19 board
+(smaller versions like 9x9 and 13x13 are also used).
+Two players: Black and White take turns placing stones
+ on the intersections of the board.
+
+2.Placing Stones
+Black moves first.
+Stones are placed on empty intersections and do not move once placed.
+3.Capturing Stones
+
+A group of connected stones is captured if all its adjacent empty points 
+(liberties) are occupied by the opponent.
+Captured stones are removed from the board.
+4.Rule (No Immediate Repetition)
+
+A player cannot place a stone that would return 
+the board to its previous state from the last move.
+This prevents infinite loops and forces players to 
+play elsewhere before retaking a captured stone.
+
+5.Suicide Rule
+
+A player cannot place a stone where it would have no liberties unless 
+it captures an opponent’s stone in the process.
+
+6.Territory & Scoring
+
+The game ends when both players pass their turns consecutively.
+Territory: Empty intersections surrounded by a player’s stones count as their territory.
+Final score = Territory + Captured Stones + compensation score 
+(bonus for White, usually 6.5 points in standard play).
+The player with the higher score wins.
+7.End of Game
+
+The game ends when both players agree there are no more beneficial moves.
+The board is scored based on territory and captured stones.
