@@ -22,9 +22,9 @@ BACKGROUND_COLOR = (219, 186, 130)
 
 
 def get_rbg(color):
-    if color == 'WHITE':
+    if color == 'white':
         return 255, 255, 255
-    elif color == 'BLACK':
+    elif color == 'black':
         return 0, 0, 0
     else:
         return 0, 133, 211
@@ -220,8 +220,8 @@ class UI:
         self.screen.blit(player_text, (self.margin + self.board_pixels + 30, self.margin + 30))
         
         # Draw scores
-        black_text = self.font.render(f"Black score: {scores['BLACK']:.1f}", True, (0, 0, 0))
-        white_text = self.font.render(f"White score: {scores['WHITE']:.1f}", True, (0, 0, 0))
+        black_text = self.font.render(f"Black score: {scores['black']:.1f}", True, (0, 0, 0))
+        white_text = self.font.render(f"White score: {scores['white']:.1f}", True, (0, 0, 0))
         self.screen.blit(black_text, (self.margin + self.board_pixels + 30, self.margin + 60))
         self.screen.blit(white_text, (self.margin + self.board_pixels + 30, self.margin + 90))
         
@@ -281,12 +281,12 @@ class UI:
         game_over_text = game_over_font.render("Game Over!", True, (0, 0, 0))
         
         # Black score details
-        black_captures = board.captured_stones['BLACK']
+        black_captures = board.captured_stones['black']
         black_score_text = score_font.render(f"Black Total: {black_score:.1f}", True, (0, 0, 0))
         black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, (100, 100, 100))
         
         # White score details (including komi)
-        white_captures = board.captured_stones['WHITE']
+        white_captures = board.captured_stones['white']
         white_score_text = score_font.render(f"White Total: {white_score:.1f}", True, (0, 0, 0))
         white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, (100, 100, 100))
         

@@ -9,13 +9,18 @@ BOARD_SIZE = 20  # number of rows/cols = BOARD_SIZE - 1
 
 
 def opponent_color(color):
-    if color == 'WHITE':
-        return 'BLACK'
-    elif color == 'BLACK':
-        return 'WHITE'
+    """
+    Return the opposite color.
+    :param color: 'black' or 'white'
+    :return: the opposite color
+    """
+    if color == 'white':
+        return 'black'
+    elif color == 'black':
+        return 'white'
     else:
-        print('Invalid color: ' + color)
-        return KeyError
+        raise ValueError("Invalid color")
+
 
 def neighbors(point, board_size):
     """Return a list of neighboring points."""
@@ -78,7 +83,7 @@ class Board(object):
     3. Suicide rule prevention
     4. Territory scoring
     """
-    def __init__(self, board_size=19, next_color='BLACK'):
+    def __init__(self, board_size=19, next_color='black'):
         """Initialize board with specified size (9x9, 13x13, or 19x19)"""
         if board_size not in [9, 13, 19]:
             raise ValueError("Board size must be 9, 13, or 19")
@@ -92,7 +97,7 @@ class Board(object):
         self.ko_point = None
         self.last_board_state = None  # For ko rule checking
         self.passes = 0  # Count consecutive passes for game end
-        self.captured_stones = {'BLACK': 0, 'WHITE': 0}  # Count captured stones
+        self.captured_stones = {'black': 0, 'white': 0}  # Count captured stones
 
         # Set komi to 6.5 for all board sizes
         self.komi = 6.5
@@ -164,7 +169,7 @@ class Board(object):
                 return False, []
         
         # Update captured stones count
-        self.captured_stones[self.next] += len(captured_points)
+        self.captured_stones[self.next.lower()] += len(captured_points)
         
         # Update ko point
         self.ko_point = None
@@ -198,7 +203,7 @@ class Board(object):
 
     def get_score(self):
         """Calculate the score using territory scoring rules."""
-        territory = {'BLACK': 0, 'WHITE': 0}
+        territory = {'black': 0, 'white': 0}
         counted = set()
 
         # Count territory
@@ -208,19 +213,19 @@ class Board(object):
                     territory_points = self._find_territory(x, y)
                     if territory_points:
                         counted.update(territory_points[0])
-                        territory[territory_points[1]] += len(territory_points[0])
+                        territory[territory_points[1].lower()] += len(territory_points[0])
 
         # Add captured stones to score
         final_score = {
-            'BLACK': territory['BLACK'] + self.captured_stones['BLACK'],
-            'WHITE': territory['WHITE'] + self.captured_stones['WHITE'] + self.komi  # Komi
+            'black': territory['black'] + self.captured_stones['black'],
+            'white': territory['white'] + self.captured_stones['white'] + self.komi  # Komi
         }
 
         return final_score
 
     def _get_opponent_color(self):
         """Get the opponent's color."""
-        return 'WHITE' if self.next == 'BLACK' else 'BLACK'
+        return 'white' if self.next == 'black' else 'black'
 
     def _get_neighbors(self, x, y):
         """Get valid neighboring points."""
@@ -311,9 +316,9 @@ class Board(object):
         for y in range(self.size):
             row = []
             for x in range(self.size):
-                if self.board[x][y] == 'BLACK':
+                if self.board[x][y] == 'black':
                     row.append('B')
-                elif self.board[x][y] == 'WHITE':
+                elif self.board[x][y] == 'white':
                     row.append('W')
                 else:
                     row.append('.')

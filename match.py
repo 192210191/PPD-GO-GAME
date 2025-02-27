@@ -20,7 +20,7 @@ class Match:
         self.game_mode, self.board_size = self._select_game_mode_and_board_size()
         
         # Initialize board with Black starting
-        self.board = Board(board_size=self.board_size, next_color='white')
+        self.board = Board(board_size=self.board_size, next_color='black')
         self.ui = UI(board_size=self.board_size)
         self.game_over = False
         self.last_move_was_pass = False  # Track if the previous move was a pass
@@ -446,7 +446,7 @@ class Match:
                     point = (x, y)
                     
                     success = False
-                    if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'BLACK'):
+                    if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'black'):
                         success, captured = self.board.put_stone(point)
                         if success:
                             # Reset pass flag since a stone was placed
@@ -461,7 +461,7 @@ class Match:
                             self.ui.draw(point, stone_color)
                             
                             # If AI's turn, make its move
-                            if self.game_mode == "AI_HUMAN" and self.board.next == 'WHITE':
+                            if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
                                 pygame.time.wait(500)
                                 self._make_ai_move()
             
@@ -477,7 +477,7 @@ class Match:
                         self.board.pass_move()
                     
                     # If AI's turn after pass
-                    if self.game_mode == "AI_HUMAN" and self.board.next == 'WHITE':
+                    if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
                         pygame.time.wait(500)
                         self._make_ai_move()
         
@@ -494,7 +494,7 @@ class Match:
             self.ui.draw_game_state(self.board.next, self.board)
             
             # AI move handling
-            if (self.game_mode == "AI_HUMAN" and self.board.next == 'WHITE') or \
+            if (self.game_mode == "AI_HUMAN" and self.board.next == 'white') or \
                (self.game_mode == "AI_AI"):
                 pygame.time.wait(500)  # Small delay before AI move
                 self._make_ai_move()
@@ -598,12 +598,12 @@ class Match:
         scores = self.board.get_score()
         
         # Show game over screen with final scores and board details
-        self.ui.show_game_over(scores['BLACK'], scores['WHITE'], self.board)
+        self.ui.show_game_over(scores['black'], scores['white'], self.board)
 
     def _restart_game(self):
         """Restart the game with the same settings."""
         # Create a new board with the same size
-        self.board = Board(board_size=self.board_size, next_color='BLACK')
+        self.board = Board(board_size=self.board_size, next_color='black')
         
         # Reset game state
         self.game_over = False
