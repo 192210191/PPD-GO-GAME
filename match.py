@@ -20,7 +20,7 @@ class Match:
         self.game_mode, self.board_size = self._select_game_mode_and_board_size()
         
         # Initialize board with Black starting
-        self.board = Board(board_size=self.board_size, next_color='BLACK')
+        self.board = Board(board_size=self.board_size, next_color='white')
         self.ui = UI(board_size=self.board_size)
         self.game_over = False
         self.last_move_was_pass = False  # Track if the previous move was a pass
