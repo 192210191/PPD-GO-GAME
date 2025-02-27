@@ -210,20 +210,33 @@ class UI:
         """Draw game state information including current player, scores, and pass button"""
         # Clear the info area
         info_rect = pygame.Rect(self.margin + self.board_pixels + 20, self.margin + 20, 180, 200)
-        pygame.draw.rect(self.screen, (255, 255, 255), info_rect)
+        pygame.draw.rect(self.screen, BACKGROUND_COLOR, info_rect)
         
         # Get current scores
         scores = board.get_score()
         
-        # Draw current player indicator
-        player_text = self.font.render(f"Current: {current_player}", True, (0, 0, 0))
-        self.screen.blit(player_text, (self.margin + self.board_pixels + 30, self.margin + 30))
+        # Colors for different sections
+        current_player_bg = (135, 206, 235)  # Sky blue
+        black_score_bg = (144, 238, 144)  # Light green
+        white_score_bg = (255, 182, 193)  # Light pink
         
-        # Draw scores
-        black_text = self.font.render(f"Black score: {scores['black']:.1f}", True, (0, 0, 0))
-        white_text = self.font.render(f"White score: {scores['white']:.1f}", True, (0, 0, 0))
-        self.screen.blit(black_text, (self.margin + self.board_pixels + 30, self.margin + 60))
-        self.screen.blit(white_text, (self.margin + self.board_pixels + 30, self.margin + 90))
+        # Draw current player indicator with rounded rectangle background
+        current_rect = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 25, 160, 30)
+        pygame.draw.rect(self.screen, current_player_bg, current_rect, border_radius=15)
+        player_text = self.font.render(f"Current: {current_player}", True, (0, 0, 0))
+        self.screen.blit(player_text, (self.margin + self.board_pixels + 35, self.margin + 30))
+        
+        # Draw black score with rounded rectangle background
+        black_rect = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 65, 160, 30)
+        pygame.draw.rect(self.screen, black_score_bg, black_rect, border_radius=15)
+        black_text = self.font.render(f"Black: {scores['black']:.1f}", True, (0, 0, 0))
+        self.screen.blit(black_text, (self.margin + self.board_pixels + 35, self.margin + 70))
+        
+        # Draw white score with rounded rectangle background
+        white_rect = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 105, 160, 30)
+        pygame.draw.rect(self.screen, white_score_bg, white_rect, border_radius=15)
+        white_text = self.font.render(f"White: {scores['white']:.1f}", True, (0, 0, 0))
+        self.screen.blit(white_text, (self.margin + self.board_pixels + 35, self.margin + 110))
         
         # Draw buttons with enhanced styling
         # Pass button
@@ -251,77 +264,119 @@ class UI:
 
     def draw_buttons(self, board):
         """Draw the pass and restart buttons."""
-        # Draw pass button
-        pygame.draw.rect(self.screen, (200, 200, 200), self.pass_button)
+        # Colors for buttons
+        button_bg = (255, 165, 0)  # Orange
+        button_hover_bg = (255, 140, 0)  # Darker orange for hover
+        
+        # Pass button
+        self.pass_button = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 150, 160, 35)
+        button_color = button_hover_bg if self.pass_button.collidepoint(pygame.mouse.get_pos()) else button_bg
+        pygame.draw.rect(self.screen, button_color, self.pass_button, border_radius=17)
+        
+        # Pass button text
+        pass_font = pygame.font.SysFont('Arial', 20, bold=True)
+        self.pass_text = pass_font.render("Pass Turn", True, (0, 0, 0))
         pass_text_rect = self.pass_text.get_rect(center=self.pass_button.center)
         self.screen.blit(self.pass_text, pass_text_rect)
         
-        # Draw restart button
-        pygame.draw.rect(self.screen, (200, 200, 200), self.restart_button)
+        # Restart button
+        self.restart_button = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 195, 160, 35)
+        button_color = button_hover_bg if self.restart_button.collidepoint(pygame.mouse.get_pos()) else button_bg
+        pygame.draw.rect(self.screen, button_color, self.restart_button, border_radius=17)
+        
+        # Restart button text
+        restart_font = pygame.font.SysFont('Arial', 20, bold=True)
+        self.restart_text = restart_font.render("Restart Game", True, (0, 0, 0))
         restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
         self.screen.blit(self.restart_text, restart_text_rect)
+        
+        pygame.display.update()
 
     def show_game_over(self, black_score, white_score, board):
         """Display game over screen with final scores and details"""
-        # Create a new blank screen
-        self.screen.fill((240, 240, 240))  # Light gray background
+        # Fonts for different text elements
+        game_over_font = pygame.font.SysFont('Arial', 36, bold=True)
+        score_font = pygame.font.SysFont('Arial', 24, bold=True)
+        detail_font = pygame.font.SysFont('Arial', 18)
+
+        # Colors for different sections
+        title_bg = (255, 215, 0)  # Gold
+        black_score_bg = (144, 238, 144)  # Light green
+        white_score_bg = (255, 182, 193)  # Light pink
         
-        # Create semi-transparent overlay for better text visibility
-        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
-        overlay.fill((255, 255, 255))
-        overlay.set_alpha(128)
-        self.screen.blit(overlay, (0, 0))
-        
-        # Create game over text with slightly larger fonts
-        game_over_font = pygame.font.SysFont('Arial', 42)
-        score_font = pygame.font.SysFont('Arial', 28)
-        detail_font = pygame.font.SysFont('Arial', 22)
-        
-        # Create text surfaces
+        # Game Over text with background
         game_over_text = game_over_font.render("Game Over!", True, (0, 0, 0))
+        title_rect = pygame.Rect(
+            self.margin + self.board_pixels/2 - 100,
+            self.margin + self.board_pixels/2 - 100,
+            200, 50
+        )
+        pygame.draw.rect(self.screen, title_bg, title_rect, border_radius=25)
+        text_rect = game_over_text.get_rect(center=title_rect.center)
+        self.screen.blit(game_over_text, text_rect)
         
         # Black score details
         black_captures = board.captured_stones['black']
         black_score_text = score_font.render(f"Black Total: {black_score:.1f}", True, (0, 0, 0))
-        black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, (100, 100, 100))
+        black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, (0, 0, 0))
         
-        # White score details (including komi)
+        # Black score background
+        black_rect = pygame.Rect(
+            self.margin + self.board_pixels/2 - 150,
+            self.margin + self.board_pixels/2,
+            300, 70
+        )
+        pygame.draw.rect(self.screen, black_score_bg, black_rect, border_radius=20)
+        
+        # Center black score text in its background
+        black_score_rect = black_score_text.get_rect(
+            centerx=black_rect.centerx,
+            centery=black_rect.centery - 15
+        )
+        black_detail_rect = black_detail.get_rect(
+            centerx=black_rect.centerx,
+            centery=black_rect.centery + 15
+        )
+        self.screen.blit(black_score_text, black_score_rect)
+        self.screen.blit(black_detail, black_detail_rect)
+        
+        # White score details
         white_captures = board.captured_stones['white']
         white_score_text = score_font.render(f"White Total: {white_score:.1f}", True, (0, 0, 0))
-        white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, (100, 100, 100))
+        white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, (0, 0, 0))
         
+        # White score background
+        white_rect = pygame.Rect(
+            self.margin + self.board_pixels/2 - 150,
+            self.margin + self.board_pixels/2 + 90,
+            300, 70
+        )
+        pygame.draw.rect(self.screen, white_score_bg, white_rect, border_radius=20)
+        
+        # Center white score text in its background
+        white_score_rect = white_score_text.get_rect(
+            centerx=white_rect.centerx,
+            centery=white_rect.centery - 15
+        )
+        white_detail_rect = white_detail.get_rect(
+            centerx=white_rect.centerx,
+            centery=white_rect.centery + 15
+        )
+        self.screen.blit(white_score_text, white_score_rect)
+        self.screen.blit(white_detail, white_detail_rect)
+        
+        # Add winner announcement
         winner = "Black" if black_score > white_score else "White"
-        margin = abs(black_score - white_score)
-        winner_text = score_font.render(f"Winner: {winner} by {margin:.1f} points!", True, (0, 100, 0))
-        
-        # Position text in center of screen
-        center_x = self.screen.get_width() // 2
-        center_y = self.screen.get_height() // 2
-        
-        # Draw all text elements with improved spacing
-        self.screen.blit(game_over_text, 
-                        game_over_text.get_rect(centerx=center_x, centery=center_y - 100))
-        
-        # Black score
-        self.screen.blit(black_score_text, 
-                        black_score_text.get_rect(centerx=center_x, centery=center_y - 40))
-        self.screen.blit(black_detail, 
-                        black_detail.get_rect(centerx=center_x, centery=center_y - 10))
-        
-        # White score
-        self.screen.blit(white_score_text, 
-                        white_score_text.get_rect(centerx=center_x, centery=center_y + 40))
-        self.screen.blit(white_detail, 
-                        white_detail.get_rect(centerx=center_x, centery=center_y + 70))
-        
-        # Winner
-        self.screen.blit(winner_text, 
-                        winner_text.get_rect(centerx=center_x, centery=center_y + 120))
-        
-        # Add exit instruction
-        exit_text = detail_font.render("Click anywhere to exit", True, (100, 100, 100))
-        self.screen.blit(exit_text, 
-                        exit_text.get_rect(centerx=center_x, bottom=self.screen.get_height() - 30))
+        winner_bg = black_score_bg if winner == "Black" else white_score_bg
+        winner_rect = pygame.Rect(
+            self.margin + self.board_pixels/2 - 100,
+            self.margin + self.board_pixels/2 + 180,
+            200, 40
+        )
+        pygame.draw.rect(self.screen, winner_bg, winner_rect, border_radius=20)
+        winner_text = score_font.render(f"{winner} Wins!", True, (0, 0, 0))
+        winner_text_rect = winner_text.get_rect(center=winner_rect.center)
+        self.screen.blit(winner_text, winner_text_rect)
         
         pygame.display.update()
         
