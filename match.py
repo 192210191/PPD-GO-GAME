@@ -529,7 +529,6 @@ class Match:
             pygame.display.update()
             
             if self.game_over:
-                pygame.time.wait(5000)  # Show final score for 5 seconds
                 break
 
         self.time_elapsed = time.time() - self.time_elapsed
@@ -619,8 +618,18 @@ class Match:
         # Calculate final scores
         scores = self.board.get_score()
         
-        # Show game over screen with final scores and board details
-        self.ui.show_game_over(scores['black'], scores['white'], self.board)
+        # Show game over screen and get return status
+        if not self.ui.show_game_over(scores['black'], scores['white'], self.board):
+            pygame.quit()
+            sys.exit()
+            
+        # Reset game state but keep the board visible
+        self.game_over = False
+        self.last_move_was_pass = False
+        
+        # Make sure the board and UI are properly redrawn
+        self.ui.draw_board()
+        self.ui.draw_game_state(self.board.next, self.board)
 
     def _restart_game(self):
         """Restart the game with the same settings."""

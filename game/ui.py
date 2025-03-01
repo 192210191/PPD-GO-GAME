@@ -305,90 +305,80 @@ class UI:
 
     def show_game_over(self, black_score, white_score, board):
         """Display game over screen with final scores and details"""
+        # Store current window dimensions
+        screen_width = max(820, self.margin * 2 + self.board_pixels + 200)
+        screen_height = self.margin * 2 + self.board_pixels + 100
+        
+        # Create a new surface for the game over screen
+        game_over_surface = pygame.Surface((screen_width, screen_height))
+        
+        # Load and scale background image for game over screen
+        try:
+            bg_image = pygame.image.load(BACKGROUND).convert()
+            bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
+            game_over_surface.blit(bg_image, (0, 0))
+        except pygame.error:
+            game_over_surface.fill(BACKGROUND_COLOR)
+        
+        # Create semi-transparent overlay for better text visibility
+        overlay = pygame.Surface((screen_width, screen_height))
+        overlay.fill((0, 0, 0))
+        overlay.set_alpha(180)
+        game_over_surface.blit(overlay, (0, 0))
+        
         # Fonts for different text elements
-        game_over_font = pygame.font.SysFont('Arial', 36, bold=True)
-        score_font = pygame.font.SysFont('Arial', 24, bold=True)
-        detail_font = pygame.font.SysFont('Arial', 18)
+        game_over_font = pygame.font.SysFont('Arial', 48, bold=True)
+        score_font = pygame.font.SysFont('Arial', 36, bold=True)
+        detail_font = pygame.font.SysFont('Arial', 24)
+        instruction_font = pygame.font.SysFont('Arial', 20)
 
         # Colors for different sections
-        title_bg = (255, 215, 0)  # Gold
+        title_color = (255, 215, 0)  # Gold
         black_score_bg = (144, 238, 144)  # Light green
         white_score_bg = (255, 182, 193)  # Light pink
+        text_color = (255, 255, 255)  # White text
         
-        # Game Over text with background
-        game_over_text = game_over_font.render("Game Over!", True, (0, 0, 0))
-        title_rect = pygame.Rect(
-            self.margin + self.board_pixels/2 - 100,
-            self.margin + self.board_pixels/2 - 100,
-            200, 50
-        )
-        pygame.draw.rect(self.screen, title_bg, title_rect, border_radius=25)
-        text_rect = game_over_text.get_rect(center=title_rect.center)
-        self.screen.blit(game_over_text, text_rect)
+        # Game Over text
+        game_over_text = game_over_font.render("Game Over!", True, title_color)
+        text_rect = game_over_text.get_rect(center=(screen_width//2, screen_height//4))
+        game_over_surface.blit(game_over_text, text_rect)
         
         # Black score details
         black_captures = board.captured_stones['black']
-        black_score_text = score_font.render(f"Black Total: {black_score:.1f}", True, (0, 0, 0))
-        black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, (0, 0, 0))
+        black_score_text = score_font.render(f"Black Total: {black_score:.1f}", True, text_color)
+        black_detail = detail_font.render(f"(Territory + {black_captures} captures)", True, text_color)
         
-        # Black score background
-        black_rect = pygame.Rect(
-            self.margin + self.board_pixels/2 - 150,
-            self.margin + self.board_pixels/2,
-            300, 70
-        )
-        pygame.draw.rect(self.screen, black_score_bg, black_rect, border_radius=20)
-        
-        # Center black score text in its background
-        black_score_rect = black_score_text.get_rect(
-            centerx=black_rect.centerx,
-            centery=black_rect.centery - 15
-        )
-        black_detail_rect = black_detail.get_rect(
-            centerx=black_rect.centerx,
-            centery=black_rect.centery + 15
-        )
-        self.screen.blit(black_score_text, black_score_rect)
-        self.screen.blit(black_detail, black_detail_rect)
+        # Position black score text
+        black_score_rect = black_score_text.get_rect(center=(screen_width//2, screen_height//2 - 60))
+        black_detail_rect = black_detail.get_rect(center=(screen_width//2, screen_height//2 - 20))
+        game_over_surface.blit(black_score_text, black_score_rect)
+        game_over_surface.blit(black_detail, black_detail_rect)
         
         # White score details
         white_captures = board.captured_stones['white']
-        white_score_text = score_font.render(f"White Total: {white_score:.1f}", True, (0, 0, 0))
-        white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, (0, 0, 0))
+        white_score_text = score_font.render(f"White Total: {white_score:.1f}", True, text_color)
+        white_detail = detail_font.render(f"(Territory + {white_captures} captures + {board.komi} komi)", True, text_color)
         
-        # White score background
-        white_rect = pygame.Rect(
-            self.margin + self.board_pixels/2 - 150,
-            self.margin + self.board_pixels/2 + 90,
-            300, 70
-        )
-        pygame.draw.rect(self.screen, white_score_bg, white_rect, border_radius=20)
-        
-        # Center white score text in its background
-        white_score_rect = white_score_text.get_rect(
-            centerx=white_rect.centerx,
-            centery=white_rect.centery - 15
-        )
-        white_detail_rect = white_detail.get_rect(
-            centerx=white_rect.centerx,
-            centery=white_rect.centery + 15
-        )
-        self.screen.blit(white_score_text, white_score_rect)
-        self.screen.blit(white_detail, white_detail_rect)
+        # Position white score text
+        white_score_rect = white_score_text.get_rect(center=(screen_width//2, screen_height//2 + 40))
+        white_detail_rect = white_detail.get_rect(center=(screen_width//2, screen_height//2 + 80))
+        game_over_surface.blit(white_score_text, white_score_rect)
+        game_over_surface.blit(white_detail, white_detail_rect)
         
         # Add winner announcement
         winner = "Black" if black_score > white_score else "White"
-        winner_bg = black_score_bg if winner == "Black" else white_score_bg
-        winner_rect = pygame.Rect(
-            self.margin + self.board_pixels/2 - 100,
-            self.margin + self.board_pixels/2 + 180,
-            200, 40
-        )
-        pygame.draw.rect(self.screen, winner_bg, winner_rect, border_radius=20)
-        winner_text = score_font.render(f"{winner} Wins!", True, (0, 0, 0))
-        winner_text_rect = winner_text.get_rect(center=winner_rect.center)
-        self.screen.blit(winner_text, winner_text_rect)
+        winner_color = black_score_bg if winner == "Black" else white_score_bg
+        winner_text = score_font.render(f"{winner} Wins!", True, winner_color)
+        winner_rect = winner_text.get_rect(center=(screen_width//2, screen_height//2 + 140))
+        game_over_surface.blit(winner_text, winner_rect)
         
+        # Add instruction text
+        instruction_text = instruction_font.render("Click anywhere to return to game", True, text_color)
+        instruction_rect = instruction_text.get_rect(center=(screen_width//2, screen_height - 50))
+        game_over_surface.blit(instruction_text, instruction_rect)
+        
+        # Display the game over screen
+        self.screen.blit(game_over_surface, (0, 0))
         pygame.display.update()
         
         # Wait for click to exit
@@ -396,12 +386,14 @@ class UI:
         while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
+                    return False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     waiting = False
-                    pygame.quit()
-                    return
+        
+        # Redraw the game board and all its elements
+        self.initialize()
+        self.draw_board()
+        return True
 
     def draw_board(self):
         """Draw the empty board."""
