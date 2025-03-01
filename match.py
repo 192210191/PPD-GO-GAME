@@ -439,6 +439,28 @@ class Match:
                         self.board.pass_move()
                     return True
                     
+                # Check if home button was clicked
+                if self.ui.home_button and self.ui.home_button.collidepoint(mouse_pos):
+                    # Properly clean up the current game state
+                    pygame.display.quit()
+                    pygame.display.init()
+                    
+                    # Reset the game state
+                    self.game_over = False
+                    self.last_move_was_pass = False
+                    
+                    # Get new game mode and board size
+                    self.game_mode, self.board_size = self._select_game_mode_and_board_size()
+                    if self.game_mode is None:  # If window was closed during selection
+                        pygame.quit()
+                        return True
+                        
+                    # Initialize new board and UI
+                    self.board = Board(board_size=self.board_size, next_color='black')
+                    self.ui = UI(board_size=self.board_size)
+                    self.ui.initialize()  # Make sure to initialize the new UI
+                    return True
+                
                 # Handle stone placement
                 if not self.game_over:
                     x = int(round(((mouse_pos[0] - self.ui.margin) / self.ui.cell_size), 0))

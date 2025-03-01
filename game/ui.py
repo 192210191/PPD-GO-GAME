@@ -16,6 +16,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 BACKGROUND = resource_path('game/images/ramin.jpg')
+HOME_ICON = resource_path('game/images/home.png')
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BACKGROUND_COLOR = (219, 186, 130)
@@ -56,6 +57,10 @@ class UI:
         self.restart_button = None
         self.restart_text = None
 
+        # Home button
+        self.home_button = None
+        self.home_icon = None
+
     def initialize(self):
         """Initialize the game board."""
         pygame.init()
@@ -67,6 +72,11 @@ class UI:
         self.screen = pygame.display.set_mode((window_width, window_height), 0, 32)
         self.background = pygame.image.load(BACKGROUND).convert()
         self.font = pygame.font.SysFont('Arial', 20)
+
+        # Initialize home button - position in top left corner
+        self.home_icon = pygame.image.load(HOME_ICON)
+        self.home_icon = pygame.transform.scale(self.home_icon, (30, 30))  # Scale the icon to appropriate size
+        self.home_button = pygame.Rect(10, 10, 30, 30)  # Position it in the top-left corner
         
         # Initialize pass button - position relative to board
         button_y = self.margin + self.board_pixels + 15
@@ -112,6 +122,7 @@ class UI:
             pygame.draw.circle(self.background, BLACK, pos, 5, 0)
 
         self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.home_icon, self.home_button)
         pygame.display.update()
 
     def coords(self, point):
@@ -396,7 +407,10 @@ class UI:
         """Draw the empty board."""
         # Draw the background
         self.screen.blit(self.background, (0, 0))
-        
+
+        # Draw the home button
+        self.screen.blit(self.home_icon, self.home_button)
+
         # Draw the board outline
         pygame.draw.rect(self.screen, BLACK, self.outline, 2)
         
@@ -448,3 +462,17 @@ class UI:
             start_pos = (self.margin, self.margin + (self.cell_size * i))
             end_pos = (self.margin + self.board_pixels, self.margin + (self.cell_size * i))
             pygame.draw.line(self.screen, BLACK, start_pos, end_pos, 1)
+
+    def handle_click(self, pos):
+        """Handle mouse click event."""
+        # Check if home button was clicked
+        if self.home_button.collidepoint(pos):
+            return 'home'
+            
+        # Check if pass button was clicked
+        if self.pass_button.collidepoint(pos):
+            return 'pass'
+            
+        # Check if restart button was clicked
+        if self.restart_button.collidepoint(pos):
+            return 'restart'
