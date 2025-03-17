@@ -17,6 +17,7 @@ def resource_path(relative_path):
 
 BACKGROUND = resource_path('game/images/ramin.jpg')
 HOME_ICON = resource_path('game/images/home.png')
+MUSIC_FILE = resource_path('game/audio/game music.mp3')
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BACKGROUND_COLOR = (219, 186, 130)
@@ -61,17 +62,21 @@ class UI:
         self.home_button = None
         self.home_icon = None
 
+        # Music control
+        self.music_playing = True  # Start with music on
+        self.music_button = None
+        self.music_text = None
+
     def initialize(self):
         """Initialize the game board."""
         pygame.init()
+        pygame.mixer.init()
         pygame.display.set_caption('Go Game')
-        
-        # Set window size based on board size with minimum width
         window_width = max(820, self.margin * 2 + self.board_pixels + 200)
         window_height = self.margin * 2 + self.board_pixels + 100
         self.screen = pygame.display.set_mode((window_width, window_height), 0, 32)
         self.background = pygame.image.load(BACKGROUND).convert()
-        self.font = pygame.font.SysFont('Arial', 20)
+        self.font = pygame.font.SysFont('Arial', 24)
 
         # Initialize home button - position in top left corner
         self.home_icon = pygame.image.load(HOME_ICON)
@@ -81,12 +86,28 @@ class UI:
         # Initialize pass button - position relative to board
         button_y = self.margin + self.board_pixels + 15
         self.pass_button = pygame.Rect(self.margin + self.board_pixels - 100, button_y, 100, 30)
-        self.pass_text = self.font.render('Pass Turn', True, (0, 0, 0))
+        self.pass_text = self.font.render('Pass Turn', True, BLACK)
 
         # Initialize restart button - position below pass button
         restart_y = button_y + 40
         self.restart_button = pygame.Rect(self.margin + self.board_pixels - 100, restart_y, 100, 30)
-        self.restart_text = self.font.render('Restart', True, (0, 0, 0))
+        self.restart_text = self.font.render('Restart', True, BLACK)
+
+        # Initialize music button - position below restart button
+        music_y = restart_y + 40
+        self.music_button = pygame.Rect(self.margin + self.board_pixels - 100, music_y, 100, 30)
+        
+        # Load and start background music
+        try:
+            pygame.mixer.music.load(MUSIC_FILE)
+            pygame.mixer.music.set_volume(0.5)  # Set volume to 50%
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+            self.music_playing = True
+        except pygame.error as e:
+            print(f"Error loading music: {e}")
+            self.music_playing = False
+        
+        self.update_music_text()
         
         # Draw the board outline
         pygame.draw.rect(self.background, BLACK, self.outline, 3)
@@ -122,6 +143,52 @@ class UI:
             pygame.draw.circle(self.background, BLACK, pos, 5, 0)
 
         self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.home_icon, self.home_button)
+        self.draw_buttons()
+        pygame.display.update()
+
+    def update_music_text(self):
+        """Update the music button text based on current state"""
+        text = 'Music: ON' if self.music_playing else 'Music: OFF'
+        self.music_text = self.font.render(text, True, BLACK)
+
+    def toggle_music(self):
+        """Toggle the background music on/off"""
+        try:
+            if self.music_playing:
+                pygame.mixer.music.pause()
+                self.music_playing = False
+            else:
+                pygame.mixer.music.unpause()
+                self.music_playing = True
+            
+            self.update_music_text()
+            self.draw_buttons()
+            pygame.display.update()
+        except pygame.error as e:
+            print(f"Error toggling music: {e}")
+
+    def draw_buttons(self):
+        """Draw all buttons on the screen"""
+        # Draw pass button
+        pygame.draw.rect(self.screen, WHITE, self.pass_button)
+        pygame.draw.rect(self.screen, BLACK, self.pass_button, 2)
+        pass_text_rect = self.pass_text.get_rect(center=self.pass_button.center)
+        self.screen.blit(self.pass_text, pass_text_rect)
+
+        # Draw restart button
+        pygame.draw.rect(self.screen, WHITE, self.restart_button)
+        pygame.draw.rect(self.screen, BLACK, self.restart_button, 2)
+        restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
+        self.screen.blit(self.restart_text, restart_text_rect)
+
+        # Draw music button
+        pygame.draw.rect(self.screen, WHITE, self.music_button)
+        pygame.draw.rect(self.screen, BLACK, self.music_button, 2)
+        music_text_rect = self.music_text.get_rect(center=self.music_button.center)
+        self.screen.blit(self.music_text, music_text_rect)
+
+        # Draw home button
         self.screen.blit(self.home_icon, self.home_button)
         pygame.display.update()
 
@@ -262,6 +329,12 @@ class UI:
         restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
         self.screen.blit(self.restart_text, restart_text_rect)
         
+        # Draw music button
+        pygame.draw.rect(self.screen, (220, 220, 220), self.music_button)
+        pygame.draw.rect(self.screen, (100, 100, 100), self.music_button, 2)
+        music_text_rect = self.music_text.get_rect(center=self.music_button.center)
+        self.screen.blit(self.music_text, music_text_rect)
+        
         # Show pass count if any
         if board.passes > 0:
             pass_rect = pygame.Rect(self.margin + self.board_pixels + 30, self.margin + 130, 100, 30)
@@ -270,36 +343,6 @@ class UI:
             pass_count = self.font.render(f"Passes: {board.passes}", True, (200, 0, 0))
             text_rect = pass_count.get_rect(center=pass_rect.center)
             self.screen.blit(pass_count, text_rect)
-        
-        pygame.display.update()
-
-    def draw_buttons(self, board):
-        """Draw the pass and restart buttons."""
-        # Colors for buttons
-        button_bg = (255, 165, 0)  # Orange
-        button_hover_bg = (255, 140, 0)  # Darker orange for hover
-        
-        # Pass button
-        self.pass_button = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 150, 160, 35)
-        button_color = button_hover_bg if self.pass_button.collidepoint(pygame.mouse.get_pos()) else button_bg
-        pygame.draw.rect(self.screen, button_color, self.pass_button, border_radius=17)
-        
-        # Pass button text
-        pass_font = pygame.font.SysFont('Arial', 20, bold=True)
-        self.pass_text = pass_font.render("Pass Turn", True, (0, 0, 0))
-        pass_text_rect = self.pass_text.get_rect(center=self.pass_button.center)
-        self.screen.blit(self.pass_text, pass_text_rect)
-        
-        # Restart button
-        self.restart_button = pygame.Rect(self.margin + self.board_pixels + 25, self.margin + 195, 160, 35)
-        button_color = button_hover_bg if self.restart_button.collidepoint(pygame.mouse.get_pos()) else button_bg
-        pygame.draw.rect(self.screen, button_color, self.restart_button, border_radius=17)
-        
-        # Restart button text
-        restart_font = pygame.font.SysFont('Arial', 20, bold=True)
-        self.restart_text = restart_font.render("Restart Game", True, (0, 0, 0))
-        restart_text_rect = self.restart_text.get_rect(center=self.restart_button.center)
-        self.screen.blit(self.restart_text, restart_text_rect)
         
         pygame.display.update()
 
@@ -468,3 +511,10 @@ class UI:
         # Check if restart button was clicked
         if self.restart_button.collidepoint(pos):
             return 'restart'
+            
+        # Check if music button was clicked
+        if self.music_button.collidepoint(pos):
+            self.toggle_music()
+            return 'music'
+        
+        return None

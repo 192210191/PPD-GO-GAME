@@ -7,23 +7,25 @@ import time
 from os.path import join
 
 class Match:
-    def __init__(self, gui=True, dir_save=None):
-        """
-        Initialize a new Go game match.
-        Allows selection of game mode and board size.
-        """
+    def __init__(self, game_mode="PVP", board_size=19):
+        """Initialize game state."""
+        pygame.init()
         pygame.font.init()
         self.font = pygame.font.SysFont('Arial', 20)
-        self.dir_save = dir_save
         
-        # Select game mode and board size
-        self.game_mode, self.board_size = self._select_game_mode_and_board_size()
+        # Select game mode and board size if not provided
+        if game_mode == "PVP" and board_size == 19:
+            self.game_mode, self.board_size = self._select_game_mode_and_board_size()
+        else:
+            self.game_mode = game_mode
+            self.board_size = board_size
         
         # Initialize board with Black starting
         self.board = Board(board_size=self.board_size, next_color='black')
         self.ui = UI(board_size=self.board_size)
+        self.ui.initialize()
         self.game_over = False
-        self.last_move_was_pass = False  # Track if the previous move was a pass
+        self.last_move_was_pass = False
 
     @property
     def winner(self):
@@ -422,25 +424,10 @@ class Match:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 
-                # Check if restart button was clicked
-                if self.ui.restart_button and self.ui.restart_button.collidepoint(mouse_pos):
-                    self._restart_game()
-                    return True
+                # Handle UI button clicks first
+                click_result = self.ui.handle_click(mouse_pos)
                 
-                # Check if pass button was clicked
-                if self.ui.pass_button.collidepoint(mouse_pos):
-                    if self.last_move_was_pass:
-                        # Both players passed consecutively, end the game
-                        self._show_game_result()
-                        self.game_over = True
-                    else:
-                        # First pass, set flag and continue game
-                        self.last_move_was_pass = True
-                        self.board.pass_move()
-                    return True
-                    
-                # Check if home button was clicked
-                if self.ui.home_button and self.ui.home_button.collidepoint(mouse_pos):
+                if click_result == 'home':
                     # Properly clean up the current game state
                     pygame.display.quit()
                     pygame.display.init()
@@ -461,31 +448,55 @@ class Match:
                     self.ui.initialize()  # Make sure to initialize the new UI
                     return True
                 
-                # Handle stone placement
-                if not self.game_over:
-                    x = int(round(((mouse_pos[0] - self.ui.margin) / self.ui.cell_size), 0))
-                    y = int(round(((mouse_pos[1] - self.ui.margin) / self.ui.cell_size), 0))
-                    point = (x, y)
-                    
-                    success = False
-                    if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'black'):
-                        success, captured = self.board.put_stone(point)
-                        if success:
-                            # Reset pass flag since a stone was placed
-                            self.last_move_was_pass = False
-                            
-                            # Remove captured stones
-                            for captured_point in captured:
-                                self.ui.remove(captured_point)
-                            
-                            # Draw the new stone
-                            stone_color = opponent_color(self.board.next)
-                            self.ui.draw(point, stone_color)
-                            
-                            # If AI's turn, make its move
-                            if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
-                                pygame.time.wait(500)
-                                self._make_ai_move()
+                elif click_result == 'restart':
+                    self._restart_game()
+                    return True
+                
+                elif click_result == 'pass':
+                    if self.last_move_was_pass:
+                        # Both players passed consecutively
+                        self._show_game_result()
+                        self.game_over = True
+                    else:
+                        # First pass
+                        self.last_move_was_pass = True
+                        self.board.pass_move()
+                        
+                        # If AI's turn after pass
+                        if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
+                            pygame.time.wait(500)
+                            self._make_ai_move()
+                    return True
+                
+                elif click_result == 'music':
+                    # Music was toggled, just update the display
+                    self.ui.draw_game_state(self.board.next, self.board)
+                    return True
+                
+                # Handle stone placement if no button was clicked
+                if not self.game_over and click_result is None:
+                    board_pos = self.ui.pixel_to_board_coords(*mouse_pos)
+                    if board_pos:
+                        if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'black'):
+                            success, captured = self.board.put_stone(board_pos)
+                            if success:
+                                # Reset pass flag since a stone was placed
+                                self.last_move_was_pass = False
+                                
+                                # Remove captured stones
+                                for captured_point in captured:
+                                    self.ui.remove(captured_point)
+                                
+                                # Draw the new stone
+                                self.ui.draw(board_pos, opponent_color(self.board.next))
+                                
+                                # Update the game state display
+                                self.ui.draw_game_state(self.board.next, self.board)
+                                
+                                # If AI's turn, make its move
+                                if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
+                                    pygame.time.wait(500)
+                                    self._make_ai_move()
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p and not self.game_over:  # Pass move
