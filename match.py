@@ -476,7 +476,7 @@ class Match:
                 # Handle stone placement if no button was clicked
                 if not self.game_over and click_result is None:
                     board_pos = self.ui.pixel_to_board_coords(*mouse_pos)
-                    if board_pos:
+                    if board_pos is not None:  # Only proceed if we got valid board coordinates
                         if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'black'):
                             success, captured = self.board.put_stone(board_pos)
                             if success:

@@ -36,12 +36,11 @@ class UI:
     def __init__(self, board_size=19):
         """Create, initialize and draw an empty board."""
         self.board_size = board_size
-        # Adjust cell size only for 19x19 to fit screen
         self.cell_size = 30 if board_size == 19 else 40
-        self.margin = 45  # margin from edge
+        self.margin = 45
+        self.board_pixels = (self.board_size - 1) * self.cell_size
         
         # Calculate board dimensions
-        self.board_pixels = (self.board_size - 1) * self.cell_size
         self.outline = pygame.Rect(self.margin, self.margin, self.board_pixels, self.board_pixels)
         self.screen = None
         self.background = None
@@ -192,70 +191,92 @@ class UI:
         self.screen.blit(self.home_icon, self.home_button)
         pygame.display.update()
 
-    def coords(self, point):
-        """Return the coordinate of a stone drawn on board"""
-        return (self.margin + point[0] * self.cell_size, 
-                self.margin + point[1] * self.cell_size)
-
-    def leftup_corner(self, point):
-        """Return the top-left corner for the area to clear when removing a stone"""
-        return (self.margin - 20 + point[0] * self.cell_size, 
-                self.margin - 20 + point[1] * self.cell_size)
-
-    def draw(self, point, color, size=15):
-        """Draw a stone at the specified intersection with a growing animation effect."""
-        rgb_color = get_rbg(color)
-        position = self.coords(point)
+    def pixel_to_board_coords(self, x, y):
+        """Convert pixel coordinates to board coordinates."""
+        # Calculate relative position from margin
+        rel_x = x - self.margin
+        rel_y = y - self.margin
         
-        # Animate stone placement with growing effect
-        for r in range(5, size + 1, 2):
-            pygame.draw.circle(self.screen, rgb_color, position, r, 0)
-            pygame.display.update()
-            pygame.time.wait(10)  # Short delay for smooth animation
+        # Calculate distance to nearest intersection
+        board_x = round(rel_x / self.cell_size)
+        board_y = round(rel_y / self.cell_size)
+        
+        # Calculate distance from click to nearest intersection
+        dist_x = abs(rel_x - (board_x * self.cell_size))
+        dist_y = abs(rel_y - (board_y * self.cell_size))
+        
+        # Only accept clicks within a certain radius of intersections
+        max_dist = self.cell_size * 0.4  # 40% of cell size
+        if dist_x > max_dist or dist_y > max_dist:
+            return None
             
-            # If not at final size, clear the previous circle
-            if r < size:
-                # Draw a slightly larger circle in background color to clean up
-                pygame.draw.circle(self.screen, BACKGROUND_COLOR, position, r + 1, 0)
-                
-                # Redraw the grid lines that might have been covered
-                # Get the grid area around the stone
-                area_rect = pygame.Rect(position[0] - r - 1, position[1] - r - 1, 
-                                      (r + 1) * 2, (r + 1) * 2)
-                stone_area = self.background.subsurface(area_rect).copy()
-                self.screen.blit(stone_area, area_rect)
+        # Ensure coordinates are within valid range (0 to board_size-1)
+        if 0 <= board_x < self.board_size and 0 <= board_y < self.board_size:
+            return (board_x, board_y)
+        return None
+
+    def board_coords_to_pixel(self, x, y):
+        """Convert board coordinates to pixel coordinates."""
+        return (self.margin + x * self.cell_size,
+                self.margin + y * self.cell_size)
+
+    def draw(self, pos, color):
+        """Draw a stone at the given board position with a growing animation."""
+        if not (0 <= pos[0] < self.board_size and 0 <= pos[1] < self.board_size):
+            return False
+            
+        x, y = self.board_coords_to_pixel(*pos)
+        stone_color = BLACK if color == 'black' else WHITE
+        final_radius = int(self.cell_size * 0.35)  # Reduced stone size to 35% of cell size
         
-        # Draw final stone
-        pygame.draw.circle(self.screen, rgb_color, position, size, 0)
-        pygame.display.update()
+        # Store the background before drawing
+        bg_rect = pygame.Rect(x - final_radius, y - final_radius,
+                            final_radius * 2, final_radius * 2)
+        bg_surface = self.screen.subsurface(bg_rect).copy()
+        
+        # Growing animation
+        for radius in range(2, final_radius + 1, 2):
+            # Restore background
+            self.screen.blit(bg_surface, bg_rect)
+            
+            # Draw stone with current radius
+            pygame.draw.circle(self.screen, stone_color, (x, y), radius)
+            if color == 'white':  # Add a black outline to white stones
+                pygame.draw.circle(self.screen, BLACK, (x, y), radius, 1)
+            
+            pygame.display.update(bg_rect)
+            pygame.time.delay(5)  # Short delay for smooth animation
+        
+        return True
 
     def remove(self, point):
-        """Remove a stone from the board at the given point."""
-        x, y = point
-        screen_x = self.margin + (x * self.cell_size)
-        screen_y = self.margin + (y * self.cell_size)
+        """Remove a stone from the board at the given point with shrinking animation."""
+        x, y = self.board_coords_to_pixel(*point)
         
-        # Get the corresponding area from the background (which has only the grid)
-        area_rect = pygame.Rect(screen_x - 20, screen_y - 20, self.cell_size, self.cell_size)
-        stone_area = self.background.subsurface(area_rect).copy()
+        # Calculate the area to clear
+        radius = int(self.cell_size * 0.35)  # Match the stone size
+        rect = pygame.Rect(x - radius, y - radius, radius * 2, radius * 2)
         
-        # Blit the clean background area (with only grid lines) onto the screen
-        self.screen.blit(stone_area, area_rect)
-        pygame.display.update()
+        # Get the clean background
+        bg_surface = self.background.subsurface(rect).copy()
+        
+        # Shrinking animation
+        for r in range(radius, 1, -2):
+            # Draw background
+            self.screen.blit(bg_surface, rect)
+            
+            # Draw shrinking stone
+            pygame.draw.circle(self.screen, (128, 128, 128), (x, y), r)  # Gray color for fading effect
+            
+            pygame.display.update(rect)
+            pygame.time.delay(5)
+        
+        # Finally restore the clean background
+        self.screen.blit(bg_surface, rect)
+        pygame.display.update(rect)
 
     def save_image(self, path_to_save):
         pygame.image.save(self.screen, path_to_save)
-
-    def pixel_to_board_coords(self, x, y):
-        """Convert pixel coordinates to board coordinates.
-        Returns None if click is outside the valid board area."""
-        if self.outline.collidepoint(x, y):
-            board_x = int(round(((x - self.margin) / self.cell_size), 0))
-            board_y = int(round(((y - self.margin) / self.cell_size), 0))
-            # Ensure coordinates are within valid board range (1-19)
-            if 1 <= board_x <= self.board_size and 1 <= board_y <= self.board_size:
-                return (board_x, board_y)
-        return None
 
     def update_score_display(self, black_score, white_score, game_over=False):
         """Update the score display at the bottom of the board."""
