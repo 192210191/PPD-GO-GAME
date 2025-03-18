@@ -5,6 +5,16 @@ import pygame
 import sys
 import time
 from os.path import join
+import os
+
+def get_resource_path(relative_path):
+    """Get the absolute path to a resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class Match:
     def __init__(self, game_mode="PVP", board_size=19):
@@ -70,7 +80,7 @@ class Match:
         
         # Load and scale background image
         try:
-            bg_image = pygame.image.load('game/images/ramin.jpg')
+            bg_image = pygame.image.load(get_resource_path('game/images/ramin.jpg'))
             bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
         except pygame.error:
             print("Warning: Could not load background image")
@@ -129,12 +139,12 @@ class Match:
             overlay.set_alpha(180)  # More opaque for better text readability
             screen.blit(overlay, (0, 0))
             
-            # Read rules from file
+            # Load and display rules
             try:
-                with open('img/Rules of Go Game.txt', 'r') as f:
-                    rules_content = f.read()
+                with open(get_resource_path('img/Rules of Go Game.txt'), 'r') as f:
+                    rules_text = f.read()
             except:
-                rules_content = "Error: Could not load rules file."
+                rules_text = "Error: Could not load rules file."
 
             # Initialize scrolling variables
             scroll_y = 0
@@ -182,7 +192,7 @@ class Match:
                 line_spacing = 25
                 max_scroll = 0  # Reset max_scroll for recalculation
                 
-                for line in rules_content.split('\n'):
+                for line in rules_text.split('\n'):
                     if line.strip():  # Skip empty lines
                         if line.strip().endswith(':') or line.strip().isupper():  # Section headers
                             text = subtitle_font.render(line, True, SPLASH_TEXT_COLOR)
