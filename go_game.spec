@@ -3,18 +3,26 @@ import os
 
 block_cipher = None
 
-# Get the absolute path to the game directory
-game_path = os.path.abspath(os.path.join(SPECPATH, 'game'))
+# Get absolute paths
+base_path = SPECPATH
+game_path = os.path.join(base_path, 'game')
 images_path = os.path.join(game_path, 'images')
 audio_path = os.path.join(game_path, 'audio')
+img_path = os.path.join(base_path, 'img')
+
+# Ensure the rules file exists
+rules_file = os.path.join(img_path, 'Rules of Go Game.txt')
+if not os.path.exists(rules_file):
+    raise FileNotFoundError(f"Rules file not found at: {rules_file}")
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=[base_path],  # Add base path to Python path
     binaries=[],
     datas=[
         (images_path, 'game/images'),
         (audio_path, 'game/audio'),
+        (rules_file, os.path.join('img')),  # Include just the rules file
     ],
     hiddenimports=[],
     hookspath=[],
@@ -42,7 +50,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,  # Temporarily set to True to see any errors
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

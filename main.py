@@ -141,11 +141,13 @@ class Match:
             
             # Load and display rules
             try:
-                with open(get_resource_path('img/Rules of Go Game.txt'), 'r') as f:
+                rules_path = get_resource_path(os.path.join('img', 'Rules of Go Game.txt'))
+                with open(rules_path, 'r') as f:
                     rules_text = f.read()
-            except:
+            except Exception as e:
+                print(f"Error loading rules: {e}")
                 rules_text = "Error: Could not load rules file."
-
+            
             # Initialize scrolling variables
             scroll_y = 0
             scroll_speed = 25
