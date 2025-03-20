@@ -22,6 +22,7 @@ class Match:
         pygame.init()
         pygame.font.init()
         self.font = pygame.font.SysFont('Arial', 20)
+        self.dir_save = None  # Initialize dir_save to None
         
         # Select game mode and board size if not provided
         if game_mode == "PVP" and board_size == 19:
@@ -540,31 +541,128 @@ class Match:
         return True
 
     def _start_game(self):
-        """Start the game with GUI for different game modes."""
-        self.ui.initialize()
-        self.time_elapsed = time.time()
+        """Main game loop."""
+        # Initialize game state display
+        self.ui.draw_game_state(self.board.next, self.board)
+        pygame.display.update()
         
-        # Main game loop
-        while True:
-            # Update game state display
+        while not self.game_over:
+            # Always update game state at the start of each loop
             self.ui.draw_game_state(self.board.next, self.board)
+            pygame.display.update()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_over = True
+                    pygame.quit()
+                    sys.exit(0)
+                    
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                    mouse_pos = pygame.mouse.get_pos()
+                    
+                    # Handle UI button clicks first
+                    click_result = self.ui.handle_click(mouse_pos)
+                    
+                    if click_result == 'pass':
+                        if self.last_move_was_pass:
+                            # Both players passed consecutively
+                            self._show_game_result()
+                            self.game_over = True
+                        else:
+                            # First pass
+                            self.last_move_was_pass = True
+                            self.board.pass_move()
+                            # Update display after pass
+                            self.ui.draw_game_state(self.board.next, self.board)
+                            pygame.display.update()
+                            
+                            # If AI's turn after pass
+                            if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
+                                pygame.time.wait(500)
+                                self._make_ai_move()
+                        continue
+                    
+                    elif click_result == 'home':
+                        # Properly clean up the current game state
+                        pygame.display.quit()
+                        pygame.display.init()
+                        
+                        # Reset the game state
+                        self.game_over = False
+                        self.last_move_was_pass = False
+                        
+                        # Get new game mode and board size
+                        self.game_mode, self.board_size = self._select_game_mode_and_board_size()
+                        if self.game_mode is None:  # If window was closed during selection
+                            pygame.quit()
+                            sys.exit(0)
+                            
+                        # Initialize new board and UI
+                        self.board = Board(board_size=self.board_size, next_color='black')
+                        self.ui = UI(board_size=self.board_size)
+                        self.ui.initialize()
+                        # Make sure to draw initial state
+                        self.ui.draw_game_state(self.board.next, self.board)
+                        pygame.display.update()
+                        continue
+                    
+                    elif click_result == 'restart':
+                        self._restart_game()
+                        continue
+                    
+                    elif click_result == 'music':
+                        # Music was toggled, just update the display
+                        self.ui.draw_game_state(self.board.next, self.board)
+                        pygame.display.update()
+                        continue
+                    
+                    # Handle stone placement if no button was clicked
+                    if not self.game_over:
+                        board_pos = self.ui.pixel_to_board_coords(*mouse_pos)
+                        if board_pos is not None:  # Only proceed if we got valid board coordinates
+                            if self.game_mode == "PVP" or (self.game_mode == "AI_HUMAN" and self.board.next == 'black'):
+                                success, captured = self.board.put_stone(board_pos)
+                                if success:
+                                    # Reset pass flag since a stone was placed
+                                    self.last_move_was_pass = False
+                                    
+                                    # Remove captured stones
+                                    for captured_point in captured:
+                                        self.ui.remove(captured_point)
+                                    
+                                    # Draw the new stone
+                                    self.ui.draw(board_pos, opponent_color(self.board.next))
+                                    
+                                    # Update the game state display
+                                    self.ui.draw_game_state(self.board.next, self.board)
+                                    pygame.display.update()
+                                    
+                                    # If AI's turn, make its move
+                                    if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
+                                        pygame.time.wait(500)
+                                        self._make_ai_move()
+                                else:
+                                    # Check if it's a suicide move
+                                    self.board.board[board_pos[0]][board_pos[1]] = self.board.next
+                                    own_group = self.board._get_group(*board_pos)
+                                    is_suicide = self.board._count_liberties(own_group) == 0 and not self.board._find_captured_groups(self.board._get_opponent_color())
+                                    self.board.board[board_pos[0]][board_pos[1]] = None
+                                    
+                                    if is_suicide:
+                                        self.ui.show_popup("Invalid Move: Suicide not allowed!")
+                                        # Redraw the game state
+                                        self.ui.draw_game_state(self.board.next, self.board)
+                                        pygame.display.update()
             
             # AI move handling
             if (self.game_mode == "AI_HUMAN" and self.board.next == 'white') or \
-               (self.game_mode == "AI_AI"):
-                pygame.time.wait(500)  # Small delay before AI move
+               (self.game_mode == "AI_AI" and not self.game_over):
+                pygame.time.wait(500)
                 self._make_ai_move()
-                continue
             
-            # Handle events
-            if not self._handle_game_events():
-                break
+            # Small delay to prevent high CPU usage
+            pygame.time.wait(10)
             
-            pygame.display.update()
-            
-            if self.game_over:
-                break
-
         self.time_elapsed = time.time() - self.time_elapsed
         if self.dir_save:
             self.ui.save_image(join(self.dir_save, 'final_board.png'))
@@ -684,6 +782,17 @@ class Match:
         self.ui.draw_game_state(self.board.next, self.board)
         
         pygame.display.update()
+
+    def end_game(self):
+        """Clean up and end the game."""
+        try:
+            if hasattr(self, 'dir_save') and self.dir_save:
+                self.ui.save_image(join(self.dir_save, 'final_board.png'))
+        except Exception:
+            pass  # Ignore any saving errors on exit
+        
+        pygame.quit()
+        sys.exit()
 
 def main():
     match = Match()
