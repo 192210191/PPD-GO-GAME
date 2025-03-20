@@ -6,12 +6,16 @@ block_cipher = None
 # Get the absolute path to the game directory
 game_path = os.path.abspath(os.path.join(SPECPATH, 'game'))
 images_path = os.path.join(game_path, 'images')
+audio_path = os.path.join(game_path, 'audio')
 
 a = Analysis(
-    ['match.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[(images_path, 'game/images')],  # Include the entire images directory
+    datas=[
+        (images_path, 'game/images'),
+        (audio_path, 'game/audio'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
