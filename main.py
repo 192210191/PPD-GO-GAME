@@ -507,6 +507,17 @@ class Match:
                                 if self.game_mode == "AI_HUMAN" and self.board.next == 'white':
                                     pygame.time.wait(500)
                                     self._make_ai_move()
+                            else:
+                                # Check if it's a suicide move
+                                self.board.board[board_pos[0]][board_pos[1]] = self.board.next
+                                own_group = self.board._get_group(*board_pos)
+                                is_suicide = self.board._count_liberties(own_group) == 0 and not self.board._find_captured_groups(self.board._get_opponent_color())
+                                self.board.board[board_pos[0]][board_pos[1]] = None
+                                
+                                if is_suicide:
+                                    self.ui.show_popup("Invalid Move: Suicide not allowed!")
+                                    # Redraw the game state to ensure everything is displayed correctly
+                                    self.ui.draw_game_state(self.board.next, self.board)
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p and not self.game_over:  # Pass move

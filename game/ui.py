@@ -539,3 +539,47 @@ class UI:
             return 'music'
         
         return None
+
+    def show_popup(self, message, duration=800):
+        """Show a popup message for specified duration in milliseconds"""
+        # Store the current screen state
+        current_screen = self.screen.copy()
+
+        # Create a semi-transparent overlay
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+        overlay.fill((0, 0, 0))
+        overlay.set_alpha(100)  # Make overlay more transparent
+        self.screen.blit(overlay, (0, 0))
+
+        # Create popup box
+        popup_width = 300
+        popup_height = 100
+        popup_x = (self.screen.get_width() - popup_width) // 2
+        popup_y = (self.screen.get_height() - popup_height) // 2
+        popup_rect = pygame.Rect(popup_x, popup_y, popup_width, popup_height)
+
+        # Draw popup box
+        pygame.draw.rect(self.screen, WHITE, popup_rect)
+        pygame.draw.rect(self.screen, BLACK, popup_rect, 2)
+
+        # Render message
+        text_surface = self.font.render(message, True, BLACK)
+        text_rect = text_surface.get_rect(center=popup_rect.center)
+        self.screen.blit(text_surface, text_rect)
+
+        # Update display
+        pygame.display.update()
+
+        # Handle events during popup display
+        start_time = pygame.time.get_ticks()
+        while pygame.time.get_ticks() - start_time < duration:
+            # Process events to prevent game from appearing frozen
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+            pygame.time.wait(10)  # Short delay to prevent high CPU usage
+
+        # Restore the previous screen state
+        self.screen.blit(current_screen, (0, 0))
+        pygame.display.update()
