@@ -23,6 +23,7 @@ class Match:
         pygame.font.init()
         self.font = pygame.font.SysFont('Arial', 20)
         self.dir_save = None  # Initialize dir_save to None
+        self.time_elapsed = 0  # Initialize time_elapsed
         
         # Select game mode and board size if not provided
         if game_mode == "PVP" and board_size == 19:
@@ -37,6 +38,22 @@ class Match:
         self.ui.initialize()
         self.game_over = False
         self.last_move_was_pass = False
+        
+        # Add signal handler for clean exit
+        try:
+            import signal
+            signal.signal(signal.SIGINT, self._handle_exit)
+            signal.signal(signal.SIGTERM, self._handle_exit)
+        except (ImportError, AttributeError):
+            pass
+
+    def _handle_exit(self, *args):
+        """Handle clean exit when window is closed"""
+        try:
+            pygame.quit()
+        except:
+            pass
+        sys.exit(0)
 
     @property
     def winner(self):
@@ -456,8 +473,7 @@ class Match:
         """Handle game events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.game_over = True
-                pygame.quit()  # Properly quit pygame
+                self._handle_exit()
                 return True
             
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -568,17 +584,26 @@ class Match:
 
     def _start_game(self):
         """Main game loop."""
-        # Initialize game state display
+        clock = pygame.time.Clock()
+        start_time = pygame.time.get_ticks()
+        
+        # Initialize game state display before the main loop
+        self.ui.draw_board()
         self.ui.draw_game_state(self.board.next, self.board)
         pygame.display.update()
         
         while not self.game_over:
+            # Update time elapsed
+            self.time_elapsed = (pygame.time.get_ticks() - start_time) // 1000
+            
             # Always update game state at the start of each loop
             self.ui.draw_game_state(self.board.next, self.board)
             pygame.display.update()
             
+            # Handle events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self._handle_exit()
                     self.game_over = True
                     pygame.quit()
                     sys.exit(0)

@@ -107,6 +107,15 @@ class UI:
             self.music_playing = False
         
         self.update_music_text()
+
+        # Initialize score display
+        self.update_score_display(0, 0)  # Initialize with 0-0 score
+        
+        # Draw the initial board
+        self.draw_board()
+        self.screen.blit(self.home_icon, self.home_button)
+        self.draw_buttons()
+        pygame.display.update()
         
         # Draw the board outline
         pygame.draw.rect(self.background, BLACK, self.outline, 3)
@@ -445,12 +454,17 @@ class UI:
         self.screen.blit(game_over_surface, (0, 0))
         pygame.display.update()
         
+        # Event handling for game over screen
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self._handle_exit()
+        
         # Wait for click to exit
         waiting = True
         while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return False
+                    self._handle_exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     waiting = False
         
@@ -458,6 +472,14 @@ class UI:
         self.initialize()
         self.draw_board()
         return True
+
+    def _handle_exit(self):
+        """Handle clean exit when window is closed"""
+        try:
+            pygame.quit()
+        except:
+            pass
+        sys.exit(0)
 
     def draw_board(self):
         """Draw the empty board."""
