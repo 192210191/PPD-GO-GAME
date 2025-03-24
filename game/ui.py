@@ -382,12 +382,12 @@ class UI:
             bg_image = pygame.transform.scale(bg_image, (screen_width, screen_height))
             game_over_surface.blit(bg_image, (0, 0))
         except pygame.error:
-            game_over_surface.fill(BACKGROUND_COLOR)
+            game_over_surface.fill((0, 0, 0))  # Black fallback if image fails to load
         
         # Create semi-transparent overlay for better text visibility
         overlay = pygame.Surface((screen_width, screen_height))
         overlay.fill((0, 0, 0))
-        overlay.set_alpha(180)
+        overlay.set_alpha(128)  # Make it consistent with other screens
         game_over_surface.blit(overlay, (0, 0))
         
         # Fonts for different text elements

@@ -66,7 +66,6 @@ class Match:
         pygame.display.set_caption('Go Game - Welcome')
         
         # Colors
-        BACKGROUND_COLOR = (240, 240, 240)  # Light gray background
         BUTTON_COLOR = (220, 220, 0)  # Yellow buttons
         HIGHLIGHT_COLOR = (100, 200, 10)  # Green highlight
         SPLASH_TEXT_COLOR = (255, 255, 255)  # White text for splash screen
@@ -91,7 +90,7 @@ class Match:
             if bg_image:
                 screen.blit(bg_image, (0, 0))
             else:
-                screen.fill(BACKGROUND_COLOR)
+                screen.fill((0, 0, 0))  # Black fallback if image fails to load
             
             # Create semi-transparent overlay
             overlay = pygame.Surface((screen_width, screen_height))
@@ -132,7 +131,7 @@ class Match:
             if bg_image:
                 screen.blit(bg_image, (0, 0))
             else:
-                screen.fill(BACKGROUND_COLOR)
+                screen.fill((0, 0, 0))  # Black fallback if image fails to load
             
             # Create semi-transparent overlay
             overlay = pygame.Surface((screen_width, screen_height))
@@ -182,7 +181,10 @@ class Match:
                             scroll_y = max(-(max_scroll - screen_height + 150), scroll_y - scroll_speed)
 
                 # Clear screen and redraw background
-                screen.blit(bg_image, (0, 0))
+                if bg_image:
+                    screen.blit(bg_image, (0, 0))
+                else:
+                    screen.fill((0, 0, 0))  # Black fallback if image fails to load
                 screen.blit(overlay, (0, 0))
 
                 # Draw title
@@ -273,7 +275,7 @@ class Match:
             if bg_image:
                 screen.blit(bg_image, (0, 0))
             else:
-                screen.fill(BACKGROUND_COLOR)
+                screen.fill((0, 0, 0))  # Black fallback if image fails to load
             
             # Create semi-transparent overlay for better text visibility
             overlay = pygame.Surface((screen_width, screen_height))
@@ -296,7 +298,7 @@ class Match:
             pygame.time.wait(100)  # Small delay to prevent high CPU usage
         
         # Clear screen before moving to board size selection
-        screen.fill(BACKGROUND_COLOR)
+        screen.fill((0, 0, 0))  # Black fallback if image fails to load
         pygame.display.flip()
         
         # Board size buttons with compact layout
@@ -330,17 +332,29 @@ class Match:
         current_page = 'BOARD_SIZE'
         
         while True:
-            screen.fill(BACKGROUND_COLOR)
+            screen.fill((0, 0, 0))  # Black fallback if image fails to load
             
             # Page logic
             if current_page == 'BOARD_SIZE':
+                # Draw background
+                if bg_image:
+                    screen.blit(bg_image, (0, 0))
+                else:
+                    screen.fill((0, 0, 0))  # Black fallback
+
+                # Create semi-transparent overlay
+                overlay = pygame.Surface((screen_width, screen_height))
+                overlay.fill((0, 0, 0))
+                overlay.set_alpha(128)
+                screen.blit(overlay, (0, 0))
+
                 # Title for board size selection
-                title = title_font.render("Select Board Size", True, MENU_TEXT_COLOR)
+                title = title_font.render("Select Board Size", True, SPLASH_TEXT_COLOR)
                 title_rect = title.get_rect(centerx=screen_width//2, top=50)
                 screen.blit(title, title_rect)
                 
                 # Subtitle
-                subtitle = subtitle_font.render("Choose a board size that suits your skill level", True, (100, 100, 100))
+                subtitle = subtitle_font.render("Choose a board size that suits your skill level", True, SPLASH_TEXT_COLOR)
                 subtitle_rect = subtitle.get_rect(centerx=screen_width//2, top=100)
                 screen.blit(subtitle, subtitle_rect)
                 
@@ -362,13 +376,25 @@ class Match:
                             pygame.draw.rect(screen, HIGHLIGHT_COLOR, board_option['rect'], width=4, border_radius=10)
             
             elif current_page == 'GAME_MODE':
+                # Draw background
+                if bg_image:
+                    screen.blit(bg_image, (0, 0))
+                else:
+                    screen.fill((0, 0, 0))  # Black fallback
+
+                # Create semi-transparent overlay
+                overlay = pygame.Surface((screen_width, screen_height))
+                overlay.fill((0, 0, 0))
+                overlay.set_alpha(128)
+                screen.blit(overlay, (0, 0))
+
                 # Title for game mode selection
-                title = title_font.render("Select Game Mode", True, MENU_TEXT_COLOR)
+                title = title_font.render("Select Game Mode", True, SPLASH_TEXT_COLOR)
                 title_rect = title.get_rect(centerx=screen_width//2, top=50)
                 screen.blit(title, title_rect)
                 
                 # Subtitle
-                subtitle = subtitle_font.render("Choose how you want to play Go", True, (100, 100, 100))
+                subtitle = subtitle_font.render("Choose how you want to play Go", True, SPLASH_TEXT_COLOR)
                 subtitle_rect = subtitle.get_rect(centerx=screen_width//2, top=100)
                 screen.blit(subtitle, subtitle_rect)
                 
