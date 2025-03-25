@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Game Download</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url('https://www.transparenttextures.com/patterns/wood-pattern.png') repeat, linear-gradient(135deg, #4a4a4a, #666666);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            color: #fff;
+        }
+
+        .logo {
+            width: 120px;
+            margin-top: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.1);
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.5em;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: fadeIn 1.5s ease;
+        }
+
+        p.intro {
+            color: #d4a373;
+            font-size: 2em;
+            margin: 20px 0;
+            text-align: center;
+            animation: fadeIn 2s ease;
+            text-shadow: 
+                2px 2px 0 #2c3e50,
+                4px 4px 0 #1a1a1a,
+                6px 6px 10px rgba(0, 0, 0, 0.5);
+            transform: perspective(500px) translateZ(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .button-wrapper {
+            text-align: center;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .download-btn, .rules-btn {
+            display: inline-block;
+            padding: 15px 35px;
+            background: linear-gradient(45deg, #2c3e50, #4a5e73);
+            color: white;
+            text-decoration: none;
+            font-size: 1.3em;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .download-btn::after, .rules-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .download-btn:hover::after, .rules-btn:hover::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .download-btn:hover, .rules-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+        }
+
+        .rules-content {
+            display: none;
+            background: rgba(210, 180, 140, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+            margin: 20px 0;
+            text-align: left;
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .rules-content.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rules-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            text-align: center;
+        }
+
+        .rules-content h4 {
+            color: #2c3e50;
+            margin: 15px 0 10px;
+            font-size: 1.2em;
+        }
+
+        .rules-content p {
+            color: #2c3e50;
+            font-size: 1em;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <img src="logo.jpg" alt="Go Game Logo" class="logo">
+    <h1>Go Game</h1>
+    <p class="intro">Download the exciting 2D Go game and start playing now!</p>
+    <div class="button-wrapper">
+        <a href="Go_Game.zip" class="download-btn" download>Download Now</a>
+        <div class="rules-btn">Rules</div>
+    </div>
+    <div class="rules-content">
+        <h3>Rules of Go Game</h3>
+        <h4>1. Board & Stones</h4>
+        <p>Go is played on a 19x19 board (smaller versions like 9x9 and 13x13 are also used).</p>
+        <p>Two players: Black and White take turns placing stones on the intersections of the board.</p>
+
+        <h4>2. Placing Stones</h4>
+        <p>Black moves first.</p>
+        <p>Stones are placed on empty intersections and do not move once placed.</p>
+
+        <h4>3. Capturing Stones</h4>
+        <p>A group of connected stones is captured if all its adjacent empty points (liberties) are occupied by the opponent.</p>
+        <p>Captured stones are removed from the board.</p>
+
+        <h4>4. Rule (No Immediate Repetition)</h4>
+        <p>A player cannot place a stone that would return the board to its previous state from the last move.</p>
+        <p>This prevents infinite loops and forces players to play elsewhere before retaking a captured stone.</p>
+
+        <h4>5. Suicide Rule</h4>
+        <p>A player cannot place a stone where it would have no liberties unless it captures an opponent’s stone in the process.</p>
+
+        <h4>6. Territory & Scoring</h4>
+        <p>The game ends when both players pass their turns consecutively.</p>
+        <p>Territory: Empty intersections surrounded by a player’s stones count as their territory.</p>
+        <p>Final score = Territory + Captured Stones + compensation score (bonus for White, usually 6.5 points in standard play).</p>
+        <p>The player with the higher score wins.</p>
+
+        <h4>7. End of Game</h4>
+        <p>The game ends when both players agree there are no more beneficial moves.</p>
+        <p>The board is scored based on territory and captured stones.</p>
+    </div>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        const rulesBtn = document.querySelector('.rules-btn');
+        const rulesContent = document.querySelector('.rules-content');
+
+        rulesBtn.addEventListener('click', () => {
+            rulesContent.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
